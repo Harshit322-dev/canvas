@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Art Canvas</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #3f3c3c;
+            font-family: Arial, sans-serif;
+            color: #0c0101;
+        }
+        .toolbar {
+            background-color: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            border: 1px solid #404040;
+        }
+        .tool-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #404040;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+        }
+        .tool-button:hover {
+            background-color: #505050;
+            transform: translateY(-2px);
+        }
+        .tool-button.active {
+            background-color: #2196F3;
+        }
+        .tool-button::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background-color: #333;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .tool-button:hover::after {
+            opacity: 1;
+            visibility: visible;
+            bottom: 120%;
+        }
+        #canvas {
+            background-color: #ffffff;
+            background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 2px solid #404040;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            background-color: #404040;
+        }
+        .color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+        #brushSize {
+            width: 100px;
+            position: relative;
+            background-color: #404040;
+            border-radius: 4px;
+        }
+        #brushSize::-webkit-slider-thumb {
+            background: #2196F3;
+            border-radius: 50%;
+        }
+        #textInput {
+            padding: 5px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            position: relative;
+            background-color: #2d2d2d;
+            color: white;
+        }
+        #textInput::placeholder {
+            color: #808080;
+        }
+        .brush-styles {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            padding: 8px;
+            display: none;
+            z-index: 1000;
+            min-width: 180px;
+            margin-top: 5px;
+            border: 1px solid #404040;
+        }
+        .brush-style {
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            color: #ffffff;
+            font-weight: 500;
+        }
+        .brush-style:hover {
+            background-color: #404040;
+            transform: translateX(5px);
+        }
+        .brush-style.active {
+            background-color: #2196F3;
+            color: #ffffff;
+        }
+        .brush-style span {
+            font-size: 14px;
+            flex-grow: 1;
+        }
+        #brushBtn {
+            position: relative;
+        }
+        .brush-preview {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            border: 2px solid #404040;
+            flex-shrink: 0;
+        }
+        .brush-style[data-style="square"] .brush-preview {
+            border-radius: 0;
+        }
+        .brush-style[data-style="spray"] .brush-preview {
+            background: radial-gradient(circle, #ffffff 30%, transparent 70%);
+        }
+        .brush-style[data-style="calligraphy"] .brush-preview {
+            transform: rotate(45deg);
+        }
+        .brush-style[data-style="texture"] .brush-preview {
+            background: repeating-linear-gradient(45deg, #ffffff, #ffffff 2px, transparent 2px, transparent 4px);
+        }
+        .shapes-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            padding: 8px;
+            display: none;
+            z-index: 1000;
+            min-width: 180px;
+            margin-top: 5px;
+            border: 1px solid #404040;
+        }
+        .shape-option {
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            color: #ffffff;
+            font-weight: 500;
+        }
+        .shape-option:hover {
+            background-color: #404040;
+            transform: translateX(5px);
+        }
+        .shape-option.active {
+            background-color: #2196F3;
+            color: #ffffff;
+        }
+        .shape-option span {
+            font-size: 14px;
+            flex-grow: 1;
+        }
+        .shape-preview {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background-color: #ffffff;
+            border: 2px solid #404040;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .shape-preview.rectangle {
+            width: 32px;
+            height: 20px;
+        }
+        .shape-preview.circle {
+            border-radius: 50%;
+        }
+        .shape-preview.triangle {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 20px solid #ffffff;
+            border-top: none;
+        }
+        .shape-preview.hexagon {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+        .shape-preview.star {
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+        .shape-preview.arrow {
+            width: 32px;
+            height: 20px;
+            position: relative;
+        }
+        .shape-preview.arrow::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-left: 8px solid #ffffff;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+        }
+        #shapesBtn {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button class="tool-button" id="pencil" data-tooltip="Pencil Tool">✏️</button>
+        <div id="brushBtn" class="tool-button" data-tooltip="Brush Tool">
+            🖌️
+            <div class="brush-styles">
+                <div class="brush-style" data-style="round">
+                    <div class="brush-preview"></div>
+                    <span>Round Brush</span>
+                </div>
+                <div class="brush-style" data-style="square">
+                    <div class="brush-preview"></div>
+                    <span>Square Brush</span>
+                </div>
+                <div class="brush-style" data-style="spray">
+                    <div class="brush-preview"></div>
+                    <span>Spray Brush</span>
+                </div>
+                <div class="brush-style" data-style="calligraphy">
+                    <div class="brush-preview"></div>
+                    <span>Calligraphy Brush</span>
+                </div>
+                <div class="brush-style" data-style="texture">
+                    <div class="brush-preview"></div>
+                    <span>Texture Brush</span>
+                </div>
+            </div>
+        </div>
+        <button class="tool-button" id="eraser" data-tooltip="Eraser Tool">��</button>
+        <div id="shapesBtn" class="tool-button" data-tooltip="Shapes">
+            ⬡
+            <div class="shapes-menu">
+                <div class="shape-option" data-shape="rectangle">
+                    <div class="shape-preview rectangle"></div>
+                    <span>Rectangle</span>
+                </div>
+                <div class="shape-option" data-shape="circle">
+                    <div class="shape-preview circle"></div>
+                    <span>Circle</span>
+                </div>
+                <div class="shape-option" data-shape="triangle">
+                    <div class="shape-preview triangle"></div>
+                    <span>Triangle</span>
+                </div>
+                <div class="shape-option" data-shape="hexagon">
+                    <div class="shape-preview hexagon"></div>
+                    <span>Hexagon</span>
+                </div>
+                <div class="shape-option" data-shape="star">
+                    <div class="shape-preview star"></div>
+                    <span>Star</span>
+                </div>
+                <div class="shape-option" data-shape="arrow">
+                    <div class="shape-preview arrow"></div>
+                    <span>Arrow</span>
+                </div>
+            </div>
+        </div>
+        <button class="tool-button" id="line" data-tooltip="Line Tool">📏</button>
+        <button class="tool-button" id="text" data-tooltip="Text Tool">T</button>
+        <button class="tool-button" id="emoji" data-tooltip="Emoji Tool">😊</button>
+        <input type="color" class="color-picker" id="colorPicker" value="#000000">
+        <input type="range" id="brushSize" min="1" max="50" value="5">
+        <input type="text" id="textInput" placeholder="Enter text">
+        <button class="tool-button" id="zoomIn" data-tooltip="Zoom In">🔍+</button>
+        <button class="tool-button" id="zoomOut" data-tooltip="Zoom Out">🔍-</button>
+        <button class="tool-button" id="clear" data-tooltip="Clear Canvas">🗑️</button>
+    </div>
+    <canvas id="canvas"></canvas>
+    <script src="script.js"></script>
+</body>
+</html> 
